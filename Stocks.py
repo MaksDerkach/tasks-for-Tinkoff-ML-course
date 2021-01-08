@@ -3,8 +3,8 @@ import csv
 filename = "YNDX_160101_161231.csv"
 date = []
 time = []
-high_price = []
-low_price = []
+high_prices = []
+low_prices = []
 
 request = int(input("Введите уровень сложности задания,\
  которое хотите проверить: "))
@@ -15,18 +15,22 @@ if request == 1:
         for row in data:
             date.append(row[0])
             time.append(row[1])
-            high_price.append(row[3])
-            low_price.append(row[4])
+            high_prices.append(row[3])
+            low_prices.append(row[4])
 
-    high_price = list(map(float, high_price[1:]))
-    low_price = list(map(float, low_price[1:]))
+    print("Описание алгоритма:\n")
 
-    min_low = low_price.index(min(low_price)) + 1
-    max_high = high_price.index(max(high_price)) + 1
+    low_prices = list(map(float, low_prices[1:]))
+    high_prices = list(map(float, high_prices[1:]))
 
-    d_buy = date[min_low][:4] + '.' + date[min_low][4:6] + '.' + date[min_low][6:]
-    d_sell = date[max_high][:4] + '.' + date[max_high][4:6] + '.' + date[max_high][6:]
+    # для начала находим первый минимум для покупки акции,
+    # а уже после находим максимум для продажи
+    min_low = low_prices.index(min(low_prices))
 
-    print('День покупки:', d_buy)
-    print('День продажи:', d_sell)
-    print('\n')
+    max_high = high_prices[min_low:].index(max(high_prices[min_low:])) + min_low
+
+    d_buy = date[min_low+1][:4] + '.' + date[min_low+1][4:6] + '.' + date[min_low+1][6:]
+    d_sell = date[max_high+1][:4] + '.' + date[max_high+1][4:6] + '.' + date[max_high+1][6:]
+
+    print('День покупки:', d_buy, min_low+1)
+    print('День продажи:', d_sell, max_high+1)
