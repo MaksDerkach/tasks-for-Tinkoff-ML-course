@@ -29,3 +29,4 @@ if request == 1:
 
     print('День покупки:', d_buy)
     print('День продажи:', d_sell)
+    print('\n')
