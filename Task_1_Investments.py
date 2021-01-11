@@ -73,10 +73,10 @@ if request == 1:
     for j in range(min_ind + 1, max_ind + 2):
         d_curr = date[j][:4] + '.' + date[j][4:6] + '.' + date[j][6:]
         t_curr = time[j][:2] + ':' + time[j][2:4] + ':' + time[j][4:]
-        # print('Минимальная цена на', d_curr, 'в', t_curr, 'составляет', low_prices[j])
-        # print('Максимлаьная цена на', d_curr, 'в', t_curr, 'составляет', high_prices[j])
+        print('Минимальная цена на', d_curr, 'в', t_curr, 'составляет', low_prices[j])
+        print('Максимлаьная цена на', d_curr, 'в', t_curr, 'составляет', high_prices[j])
 
-    #print(min_ind + 1, max_ind + 1)
+    # print(min_ind + 1, max_ind + 1)
 
 elif request == 2:
     print('ОПИСАНИЕ АЛГОРИТМА:')
@@ -91,13 +91,14 @@ elif request == 2:
 
     prev_min_ind, prev_max_ind = maximum_profit(low_prices[:min_ind], high_prices[:min_ind])
     next_min_ind, next_max_ind = maximum_profit(low_prices[max_ind:], high_prices[max_ind:])
+    next_min_ind, next_max_ind = next_min_ind + max_ind, next_max_ind + max_ind
 
     prev_profit = high_prices[prev_max_ind] - low_prices[prev_min_ind]
-    next_profit = high_prices[next_max_ind + max_ind] - low_prices[next_min_ind + max_ind]
+    next_profit = high_prices[next_max_ind] - low_prices[next_min_ind]
 
-    #print(profit, prev_profit, next_profit)
-    #print(prev_min_ind, prev_max_ind)
-    #print(next_min_ind + max_ind, next_max_ind + max_ind)
+    # print(profit, prev_profit, next_profit)
+    # print(prev_min_ind, prev_max_ind)
+    # print(next_min_ind + max_ind, next_max_ind + max_ind)
 
     if prev_profit > next_profit:
         d_buy_prev, d_sell_prev = get_days(prev_min_ind, prev_max_ind, date)
@@ -111,6 +112,20 @@ elif request == 2:
         print('Вторая дата покупки:', d_buy, 'в', t_buy, '\nДата продажи:', d_sell, 'в', t_sell)
         print('Сумма "чистого" дохода составляет:', profit)
 
+        print('Далее будет представлено изменние цены акции с', d_buy_prev, 'по', d_sell_prev)
+        for j in range(prev_min_ind + 1, prev_max_ind + 2):
+            d_curr = date[j][:4] + '.' + date[j][4:6] + '.' + date[j][6:]
+            t_curr = time[j][:2] + ':' + time[j][2:4] + ':' + time[j][4:]
+            # print('Минимальная цена на', d_curr, 'в', t_curr, 'составляет', low_prices[j])
+            # print('Максимлаьная цена на', d_curr, 'в', t_curr, 'составляет', high_prices[j])
+
+        print('Далее будет представлено изменние цены акции с', d_buy, 'по', d_sell)
+        for j in range(min_ind + 1, max_ind + 2):
+            d_curr = date[j][:4] + '.' + date[j][4:6] + '.' + date[j][6:]
+            t_curr = time[j][:2] + ':' + time[j][2:4] + ':' + time[j][4:]
+            # print('Минимальная цена на', d_curr, 'в', t_curr, 'составляет', low_prices[j])
+            # print('Максимлаьная цена на', d_curr, 'в', t_curr, 'составляет', high_prices[j])
+
     else:
         d_buy_next, d_sell_next = get_days(next_min_ind, next_max_ind, date)
         t_buy_next, t_sell_next = get_time(next_min_ind, next_max_ind, time)
@@ -122,5 +137,19 @@ elif request == 2:
         print('Сумма "чистого" дохода составляет:', profit, '\n')
         print('Вторая дата покупки:', d_buy_next, 'в', t_buy_next, '\nДата продажи:', d_sell_next, 'в', t_sell_next)
         print('Сумма "чистого" дохода составляет:', next_profit)
+
+        print('Далее будет представлено изменние цены акции с', d_buy, 'по', d_sell)
+        for j in range(min_ind + 1, max_ind + 2):
+            d_curr = date[j][:4] + '.' + date[j][4:6] + '.' + date[j][6:]
+            t_curr = time[j][:2] + ':' + time[j][2:4] + ':' + time[j][4:]
+            # print('Минимальная цена на', d_curr, 'в', t_curr, 'составляет', low_prices[j])
+            # print('Максимлаьная цена на', d_curr, 'в', t_curr, 'составляет', high_prices[j])
+
+        print('Далее будет представлено изменние цены акции с', d_buy_next, 'по', d_sell_next)
+        for j in range(next_min_ind + 1, next_max_ind + 2):
+            d_curr = date[j][:4] + '.' + date[j][4:6] + '.' + date[j][6:]
+            t_curr = time[j][:2] + ':' + time[j][2:4] + ':' + time[j][4:]
+            # print('Минимальная цена на', d_curr, 'в', t_curr, 'составляет', low_prices[j])
+            # print('Максимлаьная цена на', d_curr, 'в', t_curr, 'составляет', high_prices[j])
 else:
     print("Данный пункт не готов...")
