@@ -30,23 +30,17 @@ def start_game():
 
     if ready == '+':
         session = Sudoku(empties)
-        session.show()
-        session.swap_vertic_area()
-        print()
-        session.show()
-        session.generate()
-        print(session.answer)
-        print()
-        session.show()
+        session.play()
 
 
 class Sudoku:
     def __init__(self, empties=17, n=9):
-        self.empties = empties
+        self.empties = empties  # количество клеток, которые будут пустыми
         self.n = n
         self.session = [[((j * n // 3 + i + j // (n // 3)) % n + 1) for i in range(n)] for j in range(n)]
-        self.answer = []
-        self.end_game = 0
+        self.answer = []  # массив для хранения правильного заполения поля судоку
+        self.end_game = 0  # маркер для завершения игры
+        self.answer_list = []  # массив для хранения ходов игрока
 
     def generate(self):
         self.copy_answer()
@@ -79,19 +73,23 @@ class Sudoku:
 
     # сохранение сессии в файл
     def save(self):
-        with open('saved_data.pkl', 'wb') as file:
-            pickle.dump(self.session, file)
+        filename = input("Назовите как-нибудь файл сохранений: ")
+        with open(filename + '.pkl', 'wb') as file:
+            saved = [self.session, self.answer]
+            pickle.dump(saved, file)
 
     # загрузка сессии из файла
     def download(self):
-        with open('saved_data.pkl', 'rb') as file:
+        filename = input('Введите имя файла сохранения:')
+        with open(filename + '.pkl', 'rb') as file:
             load = pickle.load(file)
-            self.session = load
+            self.session = load[0]
+            self.answer = load[1]
 
     # функция перемешивания исходного сгенерированного поля судоку
     def mix(self):
         mix_list = ['self.swap_horiz_lines()', 'self.rotation()', 'self.swap_vertic_lines()',
-                    'swap_horiz_area', 'swap_vertic_area']
+                    'self.swap_horiz_area()', 'self.swap_vertic_area()']
         for i in range(10):
             chosen_change = random.choice(mix_list)
             eval(chosen_change)
@@ -138,13 +136,51 @@ class Sudoku:
             curr = row.copy()
             self.answer.append(curr)
 
+    def play(self):
+        self.mix()
+        self.generate()
+        self.show()
+        while self.end_game == 0:
+            turn = self.get_turn()
+            if len(turn) == 1:
+                answer = self.help_menu()
+                if answer == '1':
+                    self.save()
+                    print('Файл успешно сохранён!')
+                elif answer == '2':
+                    self.download()
+                    self.show()
+                elif answer == '3':
+                    self.print_rules()
+                elif answer == '4':
+                    self.end_game = 1
+                    print('До свидания!')
+                elif answer == '0':
+                    continue
+            elif len(turn) == 3:
+                row, column, num = list(map(int, turn))
+                self.make_turn(row, column, num)
+                self.show()
+                if self.answer == self.session:
+                    print('Вы успешно решили судоку! Поздравляем!')
+                    self.end_game = 1
+
     def get_turn(self):
-        pass
+        ans = input('Введите ваш ход (для справки введите 1): ').split()
+        self.answer_list.append('Ход 1: ' + str(ans))
+        return ans
+
+    def make_turn(self, row, column, num):
+        self.session[row - 1][column - 1] = num
+
+    def help_menu(self):
+        print('Введите 1 для сохранения игры;', 'Введите 2 для загрузки игры;',
+              'Ведите 3 для просмотра правил и примечаний;', 'Для выхода из игры введите 4;',
+              'Введите 0 для продолжения игры;', sep='\n')
+        ans = input('Введите: ')
+        return ans
 
     def check_solvability(self):
-        pass
-
-    def start(self):
         pass
 
     def print_rules(self):
