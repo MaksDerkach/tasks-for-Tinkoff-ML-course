@@ -1,6 +1,5 @@
 import random
 import pickle
-import copy
 
 
 def print_rules():
@@ -26,32 +25,59 @@ def print_rules():
 def start_game():
     print_rules()
 
-    difficulty = int(input('Введите количество полей, которые необходимо убрать, что опредлит сложность игры: '))
+    empties = int(input('Введите количество полей, которые необходимо убрать, что опредлит сложность игры: '))
     ready = str(input('По умолчанию в данной игре используется поле 9×9. Если Вы готовы продолжить, введите "+": '))
 
     if ready == '+':
-        session = Sudoku(difficulty)
+        session = Sudoku(empties)
         session.show()
         session.swap_vertic_area()
+        print()
+        session.show()
+        session.generate()
+        print(session.answer)
+        print()
         session.show()
 
 
 class Sudoku:
-    def __init__(self, difficulty=17, n=9):
-        self.difficulty = difficulty
+    def __init__(self, empties=17, n=9):
+        self.empties = empties
         self.n = n
         self.session = [[((j * n // 3 + i + j // (n // 3)) % n + 1) for i in range(n)] for j in range(n)]
         self.answer = []
+        self.end_game = 0
 
     def generate(self):
-        pass
+        self.copy_answer()
+        already_used = []
+        for i in range(self.empties):
+            one, two = random.randint(0, 8), random.randint(0, 8)
+            # необходимо, чтобы индексы убираемых чисел вновь не повторялись
+            while (one, two) in already_used:
+                one, two = random.randint(0, 8), random.randint(0, 8)
+            already_used.append((one, two))
+            self.session[one][two] = 0
 
     # вывод поля судоку
     def show(self):
-        print(*self.session, sep='\n')
-        print()
 
-    #  сохранение сессии в файл
+        # вспомогательная функция
+        def check_dots(ind, n):
+            if ind == 2 or ind == 5:
+                return str(n) + ' |' if n != 0 else '.' + ' |'
+            else:
+                return str(n) if n != 0 else '.'
+
+        i = 0
+        for line in self.session:
+            if i == 0 or i == 3 or i == 6:
+                print(' +---------+----------+----------+')
+            print(' | ' + '  '.join([check_dots(ind, n) for ind, n in enumerate(line)]) + ' |')
+            i += 1
+        print(' +---------+----------+----------+')
+
+    # сохранение сессии в файл
     def save(self):
         with open('saved_data.pkl', 'wb') as file:
             pickle.dump(self.session, file)
@@ -89,6 +115,7 @@ class Sudoku:
     def rotation(self):
         self.session = list(map(list, zip(*self.session)))
 
+    # изменение местами двух горизонтальных полей (состоят из 3 строк)
     def swap_horiz_area(self):
         swap_list = [0, 1, 2]
         one = random.choice(swap_list)
@@ -99,10 +126,29 @@ class Sudoku:
             q = self.n // 3 * two
             self.session[i + q], self.session[i + p] = self.session[i + p], self.session[i + q]
 
+    # изменение местами двух вертикальных полей (состоят из 3 столбцов)
     def swap_vertic_area(self):
         self.rotation()
         self.swap_horiz_area()
         self.rotation()
+
+    # функция для записи ответа в отдельную переменную
+    def copy_answer(self):
+        for row in self.session:
+            curr = row.copy()
+            self.answer.append(curr)
+
+    def get_turn(self):
+        pass
+
+    def check_solvability(self):
+        pass
+
+    def start(self):
+        pass
+
+    def print_rules(self):
+        pass
 
 
 start_game()
