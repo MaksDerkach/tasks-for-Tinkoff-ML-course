@@ -194,15 +194,17 @@ class Sudoku:
         self.show()
         print('Имеется три варианта его заполнения:\n', '1 - Ввод через пробел следующей комбинации из',
               'трёх чисел (Строка, Колонка, Число);\n', '2 - Ввод каждой строки судоку, где каждое число отделено от',
-              'другого пробелами, а на месте неизвестных стоит ".";\n',
-              '3 - Чтение текстового файла с заданным полем, числа разделены пробелами, а на месте неизвестных ".";\n')
+              'другого пробелами, а на месте неизвестных стоит "0";\n',
+              '3 - Чтение текстового файла с заданным полем, числа разделены пробелами, а на месте неизвестных "0";\n')
         reading_mode = int(input('Выберете режим задания поля: '))
         if reading_mode == 1:
             self.reading_mode_1()
         elif reading_mode == 2:
-            pass
+            self.reading_mode_2()
+            self.show()
         elif reading_mode == 3:
-            pass
+            self.reading_mode_3()
+            self.show()
         print('Поле успешно заполено!')
 
     def reading_mode_1(self):
@@ -217,10 +219,21 @@ class Sudoku:
                 ans = '1'
 
     def reading_mode_2(self):
-        pass
+        for n in range(self.n):
+            curr_row = input('Введите {} строку:'.format(n + 1))
+            except_zero = lambda x: int(x) if x != 0 else '.'
+            curr_row = list(map(except_zero, curr_row.split(' ')))
+            self.session[n] = curr_row
 
     def reading_mode_3(self):
-        pass
+        filename = input('Введите названия файла с расширением txt: ')
+        with open(filename + '.txt', 'r') as file:
+            row = 0
+            for line in file:
+                except_zero = lambda x: int(x) if x != 0 else '.'
+                curr_row = list(map(except_zero, line.split(' ')))
+                self.session[row] = curr_row
+                row += 1
 
     # рекуррентная функция решения судоку
     def solve(self, grid):
