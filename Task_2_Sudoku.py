@@ -58,7 +58,7 @@ class Sudoku:
         if game_mode == 1:
             self.session = [[((j * n // 3 + i + j // (n // 3)) % n + 1) for i in range(n)] for j in range(n)]
         elif game_mode == 2:
-            self.session = [['.' for i in range(n)] for j in range(n)]
+            self.session = [[0 for i in range(n)] for j in range(n)]
         self.answer = []  # массив для хранения правильного заполения поля судоку
         self.end_game = 0  # маркер для завершения игры
         self.answer_list = []  # массив для хранения ходов игрока
@@ -205,7 +205,14 @@ class Sudoku:
         elif reading_mode == 3:
             self.reading_mode_3()
             self.show()
-        print('Поле успешно заполено!')
+        print('Поле успешно заполено!', 'Компьютер начинает искать решение: ')
+        grid = self.session
+        self.answer = self.solve(grid)
+        if self.answer is None:
+            print('Компьютер не нашёл решений')
+        else:
+            for line in self.answer:
+                print(*line)
 
     def reading_mode_1(self):
         ans = 0
@@ -221,8 +228,7 @@ class Sudoku:
     def reading_mode_2(self):
         for n in range(self.n):
             curr_row = input('Введите {} строку:'.format(n + 1))
-            except_zero = lambda x: int(x) if x != 0 else '.'
-            curr_row = list(map(except_zero, curr_row.split(' ')))
+            curr_row = list(map(int, curr_row.split(' ')))
             self.session[n] = curr_row
 
     def reading_mode_3(self):
@@ -230,21 +236,66 @@ class Sudoku:
         with open(filename + '.txt', 'r') as file:
             row = 0
             for line in file:
-                except_zero = lambda x: int(x) if x != 0 else '.'
-                curr_row = list(map(except_zero, line.split(' ')))
+                curr_row = list(map(int, line.split(' ')))
                 self.session[row] = curr_row
                 row += 1
 
     # рекуррентная функция решения судоку
+    # grid - текущее состояние поля судоку
     def solve(self, grid):
         solution = copy.deepcopy(grid)
         if self.solver(solution):
             return solution
         return None
-        pass
 
     def solver(self, solution):
-        pass
+        min_cell_value = None
+        while True:
+            min_cell_value = None
+            for row_ind in range(self.n):
+                for column_ind in range(self.n):
+                    # перебором выберем только незаполненные клетки
+                    if solution[row_ind][column_ind] != 0:
+                        continue
+
+                    possible_values = self.possible_values(row_ind, column_ind, solution)
+                    count_poss_value = len(possible_values)
+
+                    # Если клетка пустая и для неё нет возможных значений, значит решение тупиковое
+                    if count_poss_value == 0:
+                        return False
+
+                    # Если существует единственная подходящая цифра, то заполняем клетку соответствующим образом
+                    if count_poss_value == 1:
+                        # удаляем и возвращаем это число, записывая в необходимую клетку
+                        solution[row_ind][column_ind] = possible_values.pop()
+
+                    # в случае, если не существует клетки с минимальным колмчеством вариантов, то
+                    # записываем клетку в данную переменную, или если для текущей клетки вариантов меньше,
+                    # чем для "минимальной", то клетка также становится новым значением переменной
+                    if not min_cell_value or count_poss_value < len(min_cell_value[1]):
+                        min_cell_value = ((row_ind, column_ind), possible_values)
+
+            # Если все клетки заполнены, то завершаем цикл и возвращаем найденное решение
+            if not min_cell_value:
+                return True
+            # Если в итоге ни одну клетку за проход не получилось заполнить (т.к. отсутствуют клетки с однозначным
+            # возможным числом), то завершаем цикл
+            elif 1 < len(min_cell_value[1]):
+                break
+        # получаем индексы клетки с минимально возможными вариантами
+        n, m = min_cell_value[0]
+        # Для клетки с минимальным количеством вариантов пробуем ставить каждую цифру
+        # по порядку и рекурсивно искать дальнейшее решение
+        for value in min_cell_value[1]:
+            next_solution = copy.deepcopy(solution)
+            next_solution[n][m] = value
+            if self.solver(next_solution):
+                for n in range(self.n):
+                    for m in range(self.n):
+                        solution[n][m] = next_solution[n][m]
+                return True
+        return False
 
     # функция для получения хода игрока
     def get_turn(self):
@@ -269,11 +320,11 @@ class Sudoku:
 
     # определяет в строках значения чисел, которые уже есть
     def get_rows(self, row_ind, curr_state_solution):
-        return set(curr_state_solution[row_ind][:]) - set('.')
+        return set(curr_state_solution[row_ind][:])
 
     # определяет в столбцах значения чисел, которые уже есть
     def get_columns(self, column_ind, curr_state_solution):
-        return set(curr_state_solution[:][column_ind]) - set('.')
+        return set(curr_state_solution[i][column_ind] for i in range(self.n))
 
     # определяет в блоке (3*3 клетки) значения чисел, которые уже есть
     def get_area(self, row, column, curr_state):
@@ -282,7 +333,7 @@ class Sudoku:
         row_block_start = (self.n // 3) * (row // 3)
         column_block_start = (self.n // 3) * (column // 3)
         return set(curr_state[row_block_start + i][column_block_start + j] for i in range(self.n // 3)
-                   for j in range(self.n // 3)) - set('.')
+                   for j in range(self.n // 3))
 
     # определение возможных значений для конкретной клетки поля
     def possible_values(self, row, column, curr_state_solution):
