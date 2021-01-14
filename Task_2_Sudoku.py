@@ -1,9 +1,11 @@
 import random
 import pickle
+import copy
 
 
 def print_rules():
-    print('   ***  Добро пожаловать в игру Судоку!  ***   ')
+    print('         ***  ДОБРО ПОЖАЛОВАТЬ В ИГРУ СУДОКУ!  ***   ')
+    print('           ------------------------------------')
 
     printed_rules = [
         'Игровое поле представляет собой квадрат размером 9×9, разделённый на меньшие' +
@@ -18,26 +20,45 @@ def print_rules():
                     'комбинацию\n', 'из трёх чисел (Строка, Колонка, Число).\n',
                     'Отсчёт строки и колонки начинается с 1 с левого верхнего края поля.']
     print(*printed_rules, sep='')
-    print()
+    print('           ------------------------------------')
     print(*printed_note, sep='')
 
 
 def start_game():
     print_rules()
+    print('           ------------------------------------')
+    print('Выберете режим игры:', '1 - Вы решаете судоку, предложженное компьютером;',
+          '2 - Компьютер решает судоку, предложенное Вами;', sep='\n')
 
-    empties = int(input('Введите количество полей, которые необходимо убрать, что опредлит сложность игры: '))
-    ready = str(input('По умолчанию в данной игре используется поле 9×9. Если Вы готовы продолжить, введите "+": '))
+    game_mode = 0
+    while game_mode == 0:
 
-    if ready == '+':
-        session = Sudoku(empties)
-        session.play()
+        # выбор режима игры
+        game_mode = int(input('Введите 1 или 2: '))
+
+        if game_mode == 1:
+            filling = int(input('Введите количество полей, которые необходимо оставить: '))
+            session = Sudoku(filling)
+            session.play()
+        elif game_mode == 2:
+            session = Sudoku(game_mode=2)
+            session.play_computer()
+        else:
+            print('\nВы ввели неверный режим игры. Попробуйте еще раз.')
+            print('Выберете режим игры:', '1 - Вы решаете судоку, предложженное компьютером;',
+                  '2 - компьютер решает судоку, предложенное Вами;', sep='\n')
+            game_mode = 0
 
 
 class Sudoku:
-    def __init__(self, empties=17, n=9):
-        self.empties = empties  # количество клеток, которые будут пустыми
+    # конструктор класса Судоку
+    def __init__(self, filling=35, n=9, game_mode=1):
+        self.empties = n * n - filling  # количество клеток, которые будут заполнены
         self.n = n
-        self.session = [[((j * n // 3 + i + j // (n // 3)) % n + 1) for i in range(n)] for j in range(n)]
+        if game_mode == 1:
+            self.session = [[((j * n // 3 + i + j // (n // 3)) % n + 1) for i in range(n)] for j in range(n)]
+        elif game_mode == 2:
+            self.session = [['.' for i in range(n)] for j in range(n)]
         self.answer = []  # массив для хранения правильного заполения поля судоку
         self.end_game = 0  # маркер для завершения игры
         self.answer_list = []  # массив для хранения ходов игрока
@@ -136,6 +157,7 @@ class Sudoku:
             curr = row.copy()
             self.answer.append(curr)
 
+    # режим игры для отгадывания судоку человеком
     def play(self):
         self.mix()
         self.generate()
@@ -166,14 +188,62 @@ class Sudoku:
                     print('Вы успешно решили судоку! Поздравляем!')
                     self.end_game = 1
 
+    # режим игры для отгадывания судоку компьютером
+    def play_computer(self):
+        print('Перед Вами пустое поле:')
+        self.show()
+        print('Имеется три варианта его заполнения:\n', '1 - Ввод через пробел следующей комбинации из',
+              'трёх чисел (Строка, Колонка, Число);\n', '2 - Ввод каждой строки судоку, где каждое число отделено от',
+              'другого пробелами, а на месте неизвестных стоит ".";\n',
+              '3 - Чтение текстового файла с заданным полем, числа разделены пробелами, а на месте неизвестных ".";\n')
+        reading_mode = int(input('Выберете режим задания поля: '))
+        if reading_mode == 1:
+            self.reading_mode_1()
+        elif reading_mode == 2:
+            pass
+        elif reading_mode == 3:
+            pass
+        print('Поле успешно заполено!')
+
+    def reading_mode_1(self):
+        ans = 0
+        while ans != '1':
+            ans = input('Введите поле и число (для завершения введите 1): ').split()
+            if len(ans) == 3:
+                row, column, num = list(map(int, ans))
+                self.make_turn(row, column, num)
+                self.show()
+            else:
+                ans = '1'
+
+    def reading_mode_2(self):
+        pass
+
+    def reading_mode_3(self):
+        pass
+
+    # рекуррентная функция решения судоку
+    def solve(self, grid):
+        solution = copy.deepcopy(grid)
+        if self.solver(solution):
+            return solution
+        return None
+        pass
+
+    def solver(self, solution):
+        pass
+
+    # функция для получения хода игрока
     def get_turn(self):
         ans = input('Введите ваш ход (для справки введите 1): ').split()
-        self.answer_list.append('Ход 1: ' + str(ans))
+        self.answer_list.append('Ход: ' + str(ans))
         return ans
 
+    # функция для выполнения хода, полученного от игрока
     def make_turn(self, row, column, num):
         self.session[row - 1][column - 1] = num
 
+    # вывод меню справки
     def help_menu(self):
         print('Введите 1 для сохранения игры;', 'Введите 2 для загрузки игры;',
               'Ведите 3 для просмотра правил и примечаний;', 'Для выхода из игры введите 4;',
@@ -183,6 +253,31 @@ class Sudoku:
 
     def check_solvability(self):
         pass
+
+    # определяет в строках значения чисел, которые уже есть
+    def get_rows(self, row_ind, curr_state_solution):
+        return set(curr_state_solution[row_ind][:]) - set('.')
+
+    # определяет в столбцах значения чисел, которые уже есть
+    def get_columns(self, column_ind, curr_state_solution):
+        return set(curr_state_solution[:][column_ind]) - set('.')
+
+    # определяет в блоке (3*3 клетки) значения чисел, которые уже есть
+    def get_area(self, row, column, curr_state):
+        # так как каждая строка и столбец (а точнее элемент на их пересечении) привязаны к своему блоку,
+        # то для начала определим к какому блоку принадлежит этот элемент
+        row_block_start = (self.n // 3) * (row // 3)
+        column_block_start = (self.n // 3) * (column // 3)
+        return set(curr_state[row_block_start + i][column_block_start + j] for i in range(self.n // 3)
+                   for j in range(self.n // 3)) - set('.')
+
+    # определение возможных значений для конкретной клетки поля
+    def possible_values(self, row, column, curr_state_solution):
+        set_of_values = set(i for i in range(1, self.n + 1))
+        set_of_values -= self.get_rows(row, curr_state_solution)
+        set_of_values -= self.get_columns(column, curr_state_solution)
+        set_of_values -= self.get_area(row, column, curr_state_solution)
+        return set_of_values
 
     def print_rules(self):
         printed_rules = [
@@ -197,8 +292,9 @@ class Sudoku:
         printed_note = ['Примечание: \nДля ввода варианта заполнения поля необходимо через пробел ввести следующую ',
                         'комбинацию\n', 'из трёх чисел (Строка, Колонка, Число).\n',
                         'Отсчёт строки и колонки начинается с 1 с левого верхнего края поля.']
+        print('           ------------------------------------')
         print(*printed_rules, sep='')
-        print()
+        print('           ------------------------------------')
         print(*printed_note, sep='')
 
 
