@@ -63,20 +63,30 @@ class Sudoku:
         self.end_game = 0  # маркер для завершения игры
         self.answer_list = []  # массив для хранения ходов игрока
 
+    # генерация решаемого судоку
     def generate(self):
         self.copy_answer()
         already_used = []
         for i in range(self.empties):
             one, two = random.randint(0, 8), random.randint(0, 8)
-            # необходимо, чтобы индексы убираемых чисел вновь не повторялись
+
+            # необходимо, чтобы индексы убираемых чисел вновь не повторялись,
             while (one, two) in already_used:
                 one, two = random.randint(0, 8), random.randint(0, 8)
+
+            grid = copy.deepcopy(self.session)
+            grid[one][two] = 0
+            # а также существовало единственное решение
+            while not self.solve(grid):
+                grid = copy.deepcopy(self.session)
+                one, two = random.randint(0, 8), random.randint(0, 8)
+                grid[one][two] = 0
+
             already_used.append((one, two))
             self.session[one][two] = 0
 
     # вывод поля судоку
     def show(self):
-
         # вспомогательная функция
         def check_dots(ind, n):
             if ind == 2 or ind == 5:
@@ -206,14 +216,17 @@ class Sudoku:
             self.reading_mode_3()
             self.show()
         print('Поле успешно заполено!', 'Компьютер начинает искать решение: ')
-        grid = self.session
-        self.answer = self.solve(grid)
+
+        # компьютер начинает решать судоку
+        self.answer = self.solve(self.session)
         if self.answer is None:
             print('Компьютер не нашёл решений')
         else:
             for line in self.answer:
                 print(*line)
+            self.turn_computer_show()
 
+    # заполнение поля судоку для каждого числа
     def reading_mode_1(self):
         ans = 0
         while ans != '1':
@@ -225,12 +238,15 @@ class Sudoku:
             else:
                 ans = '1'
 
+    # заполнение поля судоку построчно через пробел
     def reading_mode_2(self):
         for n in range(self.n):
             curr_row = input('Введите {} строку:'.format(n + 1))
             curr_row = list(map(int, curr_row.split(' ')))
             self.session[n] = curr_row
 
+    # заполнение поля судоку посредством чтения из файла
+    # пример находится в той же ветке test.txt
     def reading_mode_3(self):
         filename = input('Введите названия файла с расширением txt: ')
         with open(filename + '.txt', 'r') as file:
@@ -248,8 +264,9 @@ class Sudoku:
             return solution
         return None
 
+    # основной алгоритм решения судоку компьютером
     def solver(self, solution):
-        min_cell_value = None
+        history = []  # необходимо для запоминания шагов компьюетра
         while True:
             min_cell_value = None
             for row_ind in range(self.n):
@@ -263,12 +280,15 @@ class Sudoku:
 
                     # Если клетка пустая и для неё нет возможных значений, значит решение тупиковое
                     if count_poss_value == 0:
+                        self.delete_wrong_ans(history)
                         return False
 
                     # Если существует единственная подходящая цифра, то заполняем клетку соответствующим образом
                     if count_poss_value == 1:
                         # удаляем и возвращаем это число, записывая в необходимую клетку
                         solution[row_ind][column_ind] = possible_values.pop()
+                        self.answer_list.append([row_ind, column_ind, solution[row_ind][column_ind]])
+                        history.append([row_ind, column_ind, solution[row_ind][column_ind]])
 
                     # в случае, если не существует клетки с минимальным колмчеством вариантов, то
                     # записываем клетку в данную переменную, или если для текущей клетки вариантов меньше,
@@ -279,7 +299,7 @@ class Sudoku:
             # Если все клетки заполнены, то завершаем цикл и возвращаем найденное решение
             if not min_cell_value:
                 return True
-            # Если в итоге ни одну клетку за проход не получилось заполнить (т.к. отсутствуют клетки с однозначным
+            # Если в итоге ни одну клетку за проход не получилось заполнить (т.к. отсутствуют клетки с однозначно
             # возможным числом), то завершаем цикл
             elif 1 < len(min_cell_value[1]):
                 break
@@ -291,16 +311,18 @@ class Sudoku:
             next_solution = copy.deepcopy(solution)
             next_solution[n][m] = value
             if self.solver(next_solution):
+                self.answer_list.append([n, m, next_solution[n][m]])
+                history.append([n, m, next_solution[n][m]])
                 for n in range(self.n):
                     for m in range(self.n):
                         solution[n][m] = next_solution[n][m]
                 return True
+        self.delete_wrong_ans(history)
         return False
 
     # функция для получения хода игрока
     def get_turn(self):
         ans = input('Введите ваш ход (для справки введите 1): ').split()
-        self.answer_list.append('Ход: ' + str(ans))
         return ans
 
     # функция для выполнения хода, полученного от игрока
@@ -314,9 +336,6 @@ class Sudoku:
               'Введите 0 для продолжения игры;', sep='\n')
         ans = input('Введите: ')
         return ans
-
-    def check_solvability(self):
-        pass
 
     # определяет в строках значения чисел, которые уже есть
     def get_rows(self, row_ind, curr_state_solution):
@@ -343,6 +362,7 @@ class Sudoku:
         set_of_values -= self.get_area(row, column, curr_state_solution)
         return set_of_values
 
+    # Вывод правил
     def print_rules(self):
         printed_rules = [
             'Игровое поле представляет собой квадрат размером 9×9, разделённый на меньшие' +
@@ -361,7 +381,22 @@ class Sudoku:
         print('           ------------------------------------')
         print(*printed_note, sep='')
 
+    # используется при решении судоку компьютером для удаления неверных ходов
+    def delete_wrong_ans(self, history):
+        for elem in history:
+            if elem in self.answer_list:
+                self.answer_list.remove(elem)
 
+    # визуализация ходов компьютера
+    def turn_computer_show(self):
+        for turn in self.answer_list:
+            row, column, num = turn
+            print('\nХод компьютера: ', row, column, num)
+            self.make_turn(row + 1, column + 1, num)
+            self.show()
+
+
+# начало игры
 start_game()
 
 # необходимо для того, чтобы после завершения игры программа не закрывалась при запуске её через консоль
